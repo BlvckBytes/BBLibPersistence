@@ -295,7 +295,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     );
 
     conn = DriverManager.getConnection(
-      "jdbc:mysql://" + resource + "?allowMultiQueries=true&autoReconnect=true",
+      "jdbc:mysql://" + resource + "?allowMultiQueries=true&autoReconnect=true&createDatabaseIfNotExist=true",
       username, credentials.getPassword()
     );
 
