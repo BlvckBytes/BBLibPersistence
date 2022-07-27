@@ -127,7 +127,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   @Override
   public <T extends APersistentModel>boolean delete(Class<T> type, UUID id) throws PersistenceException {
     try {
-      return deleteModel(type, id);
+      return deleteModel(type, List.of(id)) > 0;
     } catch (PersistenceException e) {
       throw e;
     } catch (Exception e) {
@@ -249,8 +249,26 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   }
 
   @Override
-  public boolean delete(APersistentModel model) throws PersistenceException {
+  public <T extends APersistentModel> boolean delete(T model) throws PersistenceException {
     return delete(model.getClass(), model.getId());
+  }
+
+  @Override
+  public <T extends APersistentModel> int delete(List<T> models) throws PersistenceException {
+    if (models.size() == 0)
+      return 0;
+
+    try {
+      return deleteModel(
+        models.get(0).getClass(),
+        models.stream().map(APersistentModel::getId).collect(Collectors.toList())
+      );
+    } catch (PersistenceException e) {
+      throw e;
+    } catch (Exception e) {
+      logger.logError(e);
+      throw new PersistenceException("An internal error occurred");
+    }
   }
 
   @Override
@@ -1535,24 +1553,24 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   //////////////////////////////////// Deletion ////////////////////////////////////////
 
   /**
-   * Delete an existing modelfrom the database by it's ID
-   * @param id ID of the model
-   * @return True if the model could be deleted, false if it didn't exist
+   * Delete existing models from the database by their ID
+   * @param ids IDs of the models to delete
+   * @return Number of affected rows
    */
-  private boolean deleteModel(Class<? extends APersistentModel> type, UUID id) throws Exception {
+  private int deleteModel(Class<? extends APersistentModel> type, List<UUID> ids) throws Exception {
     MysqlTable table = getTableFromModel(type, false);
 
     PreparedStatement ps = conn.prepareStatement(
-      "DELETE FROM `" + table.getName() + "` WHERE `id` = " + uuidToBin(id) + ";"
+      "DELETE FROM `" + table.getName() + "` WHERE `id` IN (" +
+      ids.stream().map(this::uuidToBin).collect(Collectors.joining(", ")) +
+      ");"
     );
 
     logStatement(ps);
 
-    if (ps.executeUpdate() == 0)
-      return false;
-
+    int aff = ps.executeUpdate();
     ps.close();
-    return true;
+    return aff;
   }
 
   //////////////////////////////////// Writing ////////////////////////////////////////

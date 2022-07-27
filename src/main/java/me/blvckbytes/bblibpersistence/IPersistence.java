@@ -23,7 +23,7 @@ public interface IPersistence {
    * Store a model persistently
    * @param model Model to store
    */
-  void store(APersistentModel model) throws PersistenceException;
+  <T extends APersistentModel> void store(T model) throws PersistenceException;
 
   /**
    * Store a batch of models persistently (asynchronous)
@@ -43,7 +43,13 @@ public interface IPersistence {
    * Delete a previously created model
    * @param model Model to delete
    */
-   boolean delete(APersistentModel model) throws PersistenceException;
+  <T extends APersistentModel> boolean delete(T model) throws PersistenceException;
+
+  /**
+   * Delete multiple previously created models
+   * @param models Models to delete
+   */
+  <T extends APersistentModel> int delete(List<T> models) throws PersistenceException;
 
   /**
    * Delete models by a query
