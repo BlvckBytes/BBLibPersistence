@@ -88,17 +88,17 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     Consumer<@Nullable PersistenceException> error
   ) {
     if (models.size() == 0) {
-      plugin.runTask(() -> error.accept(null));
+      plugin.runTaskAlways(() -> error.accept(null));
       return;
     }
 
-    plugin.runTaskAsynchronously(() -> {
+    plugin.runTaskAsynchronouslyAlways(() -> {
       try {
         writeModels(models);
-        plugin.runTask(() -> error.accept(null));
+        plugin.runTaskAlways(() -> error.accept(null));
       } catch (Exception e) {
         logger.logError(e);
-        plugin.runTask(() -> error.accept(new PersistenceException("An internal error occurred")));
+        plugin.runTaskAlways(() -> error.accept(new PersistenceException("An internal error occurred")));
       }
     });
   }
